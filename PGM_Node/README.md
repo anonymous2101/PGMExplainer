@@ -5,7 +5,7 @@ There are 3 folders in PGM_Node:
   * Explain_GNN: To generate PGM Explaination for GNN predictions
   
 To generate graph data, direct into Generate_XA_Data and run: 
-> python3 GenData.py --dataset [dataset-name]
+`<addr>` python3 GenData.py --dataset [dataset-name]
     * dataset-name:
         * syn1, syn2, ... , syn6
         * bitcoinalpha
