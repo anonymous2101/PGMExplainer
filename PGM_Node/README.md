@@ -8,10 +8,9 @@ To generate graph data, direct into Generate_XA_Data and run:
 `python3 GenData.py --dataset [dataset-name]` 
 
   * dataset-name:
-  
-        * syn1, syn2, ... , syn6
-        * bitcoinalpha
-        * bitcoinotc
+   * syn1, syn2, ... , syn6
+   * bitcoinalpha
+   * bitcoinotc
         
   * Generate feature matrix X, adjacency matrix A and ground-truth label L into "XAL" folder
 
