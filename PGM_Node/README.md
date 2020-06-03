@@ -1,8 +1,8 @@
 
 There are 3 folders in PGM_Node:
-  Generate_XA_Data: To generate the graph data for the node classification experiments
-  Train_GNN_model: To train the GNN models for the  node classification tasks
-  Explain_GNN: To generate PGM Explaination for GNN predictions
+  * Generate_XA_Data: To generate the graph data for the node classification experiments
+  * Train_GNN_model: To train the GNN models for the  node classification tasks
+  * Explain_GNN: To generate PGM Explaination for GNN predictions
   
 To generate graph data, direct into Generate_XA_Data and run: 
 python3 GenData.py --dataset [dataset-name]
