@@ -9,6 +9,7 @@ To generate graph data, direct into Generate_XA_Data and run:
 
   * dataset-name: syn1, syn2, syn3, syn4, syn5, syn6, bitcoinalpha, bitcoinotc       
   * Generate feature matrix X, adjacency matrix A and ground-truth label L are stored in "XAL" folder
+  * The synthetic data 1,2,3,4 and 5 are from https://github.com/RexYing/gnn-model-explainer
 
 To generate ground-truth for explanations, direct into Generate_XA_Data and run: 
 'python3 GenGroundTruth.py --dataset [dataset-name]'
