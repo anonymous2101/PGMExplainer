@@ -12,20 +12,20 @@ To generate graph data, direct into Generate_XA_Data and run:
   * The synthetic data 1,2,3,4 and 5 are from https://github.com/RexYing/gnn-model-explainer
 
 To generate ground-truth for explanations, direct into Generate_XA_Data and run: 
-'python3 GenGroundTruth.py --dataset [dataset-name]'
+`python3 GenGroundTruth.py --dataset [dataset-name]`
   
   * dataset-name: bitcoinalpha, bitcoinotc       
   * Generated ground-truth Explanations are saved in "ground_truth_explanation" folder
 
 To train GNN model, direct into Train_GNN_model and run:
-'python3 train.py --dataset [dataset-name]'
+`python3 train.py --dataset [dataset-name]`
 
   * dataset-name: syn1, syn2, syn3, syn4, syn5, syn6, bitcoinalpha, bitcoinotc
   * Generated model states are saved in "cpkt" folders
   * The model are obtained from https://github.com/RexYing/gnn-model-explainer
 
 To run PGM explainer, direct into Explain_GNN folder and run:
-'python3 main.py --dataset [dataset-name] --num-perturb-samples [int1] --top-node [int2]'
+`python3 main.py --dataset [dataset-name] --num-perturb-samples [int1] --top-node [int2]`
    
    * dataset-name: syn1, syn2, syn3, syn4, syn5, syn6, bitcoinalpha, bitcoinotc
    * int1: recommend 800-1000
@@ -33,7 +33,7 @@ To run PGM explainer, direct into Explain_GNN folder and run:
    * explanations are stored in result folder. Might need to creat 'dataset-name' folder to properly stored the result.
 
 To evaluate explanations, direct into Explain_GNN folder and run:
-'python3 evaluate_explanations.py --dataset [dataset-name] --num-perturb-samples [int1]
+`python3 evaluate_explanations.py --dataset [dataset-name] --num-perturb-samples [int1]`
  
    * dataset-name: syn1, syn2, syn3, syn4, syn5, syn6, bitcoinalpha, bitcoinotc
    * reports are stored in result folder
