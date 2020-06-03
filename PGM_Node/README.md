@@ -8,6 +8,7 @@ To generate graph data, direct into Generate_XA_Data and run:
 `python3 GenData.py --dataset [dataset-name]` 
 
   * dataset-name:
+   
    * syn1, syn2, ... , syn6
    * bitcoinalpha
    * bitcoinotc
