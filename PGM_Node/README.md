@@ -21,7 +21,7 @@ To train GNN model, direct into Train_GNN_model and run:
 
   * dataset-name: syn1, syn2, syn3, syn4, syn5, syn6, bitcoinalpha, bitcoinotc
   * Generated model states are saved in "cpkt" folders
-  * The model are obtained from >https://github.com/RexYing/gnn-model-explainer
+  * The model are obtained from https://github.com/RexYing/gnn-model-explainer
 
 To run PGM explainer, direct into Explain_GNN folder and run:
 'python3 main.py --dataset [dataset-name] --num-perturb-samples [int1] --top-node [int2]'
