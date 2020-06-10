@@ -9,6 +9,7 @@ from pgmpy.estimators.CITests import chi_square
 from pgmpy.estimators import HillClimbSearch, BicScore
 from pgmpy.models import BayesianModel
 from pgmpy.inference import VariableElimination
+from scipy import stats
 
 
 class Node_Explainer:
@@ -273,12 +274,144 @@ class Node_Explainer:
 
     def generate_evidence(self, evidence_list):
         return dict(zip(evidence_list,[1 for node in evidence_list]))
+    
+    def chi_square(self, X, Y, Z, data):
+        """
+        Modification of Chi-square conditional independence test from pgmpy
+        Tests the null hypothesis that X is independent from Y given Zs.
+
+        Parameters
+        ----------
+        X: int, string, hashable object
+            A variable name contained in the data set
+        Y: int, string, hashable object
+            A variable name contained in the data set, different from X
+        Zs: list of variable names
+            A list of variable names contained in the data set, different from X and Y.
+            This is the separating set that (potentially) makes X and Y independent.
+            Default: []
+        Returns
+        -------
+        chi2: float
+            The chi2 test statistic.
+        p_value: float
+            The p_value, i.e. the probability of observing the computed chi2
+            statistic (or an even higher value), given the null hypothesis
+            that X _|_ Y | Zs.
+        sufficient_data: bool
+            A flag that indicates if the sample size is considered sufficient.
+            As in [4], require at least 5 samples per parameter (on average).
+            That is, the size of the data set must be greater than
+            `5 * (c(X) - 1) * (c(Y) - 1) * prod([c(Z) for Z in Zs])`
+            (c() denotes the variable cardinality).
+        References
+        ----------
+        [1] Koller & Friedman, Probabilistic Graphical Models - Principles and Techniques, 2009
+        Section 18.2.2.3 (page 789)
+        [2] Neapolitan, Learning Bayesian Networks, Section 10.3 (page 600ff)
+            http://www.cs.technion.ac.il/~dang/books/Learning%20Bayesian%20Networks(Neapolitan,%20Richard).pdf
+        [3] Chi-square test https://en.wikipedia.org/wiki/Pearson%27s_chi-squared_test#Test_of_independence
+        [4] Tsamardinos et al., The max-min hill-climbing BN structure learning algorithm, 2005, Section 4
+        """
+
+        if isinstance(Z, (frozenset, list, set, tuple)):
+            Z = list(Z)
+        else:
+            Z = [Z]
+
+
+        state_names = {
+                var_name: data.loc[:, var_name].unique() for var_name in data.columns
+            }
+
+        XYZ_state_counts = pd.crosstab(
+            index=data[X], columns=[data[Y]] + [data[z] for z in Z]
+        )
+        # reindex to add missing rows & columns (if some values don't appear in data)
+        row_index = state_names[X]
+        column_index = pd.MultiIndex.from_product(
+            [state_names[Y]] + [state_names[z] for z in Z], names=[Y] + Z
+        )
+        if not isinstance(XYZ_state_counts.columns, pd.MultiIndex):
+            XYZ_state_counts.columns = pd.MultiIndex.from_arrays([XYZ_state_counts.columns])
+        XYZ_state_counts = XYZ_state_counts.reindex(
+            index=row_index, columns=column_index
+        ).fillna(0)
+
+        # compute the expected frequency/state_count table if X _|_ Y | Zs:
+        YZ_state_counts = XYZ_state_counts.sum().unstack(Z)  # marginalize out X
+        Z_state_counts = YZ_state_counts.sum()  # marginalize out both
+
+        YXZ_state_counts = pd.crosstab(
+            index=data[Y], columns=[data[X]] + [data[z] for z in Z]
+        )
+        row_index_Y = state_names[Y]
+        column_index_Y = pd.MultiIndex.from_product(
+            [state_names[X]] + [state_names[z] for z in Z], names=[X] + Z
+            )
+        if not isinstance(XYZ_state_counts.columns, pd.MultiIndex):
+            YXZ_state_counts.columns = pd.MultiIndex.from_arrays([YXZ_state_counts.columns])
+        YXZ_state_counts = YXZ_state_counts.reindex(
+            index=row_index_Y, columns=column_index_Y
+            ).fillna(0)
+        XZ_state_counts = YXZ_state_counts.sum().unstack(Z)  # marginalize out Y
+
+        XYZ_expected = pd.DataFrame(
+            index=XYZ_state_counts.index, columns=XYZ_state_counts.columns
+        )
+        for X_val in XYZ_expected.index:
+            if Z:
+                for Y_val in XYZ_expected.columns.levels[0]:
+                    XYZ_expected.loc[X_val, Y_val] = (
+                        XZ_state_counts.loc[X_val]
+                        * YZ_state_counts.loc[Y_val]
+                        / Z_state_counts
+                    ).values
+            else:
+                for Y_val in XYZ_expected.columns:
+                    XYZ_expected.loc[X_val, Y_val] = (
+                        XZ_state_counts.loc[X_val]
+                        * YZ_state_counts.loc[Y_val]
+                        / float(Z_state_counts)
+                    )
+
+        observed = XYZ_state_counts.values.flatten()
+        expected = XYZ_expected.fillna(0).values.flatten()
+        # remove elements where the expected value is 0;
+        # this also corrects the degrees of freedom for chisquare
+        observed, expected = zip(
+            *((o, e) for o, e in zip(observed, expected) if not e == 0)
+        )
+
+        chi2, significance_level = stats.chisquare(observed, expected)
+
+        return chi2, significance_level
+    
+    def search_MK(self, data, target, nodes):
+        MB = nodes
+        while True:
+            count = 0
+            for node in nodes:
+                evidences = MB.copy()
+                evidences.remove(node)    
+                _, p = self.chi_square(target, node, evidences, data[nodes+ [target]])
+                if p > 0.05:
+                    MB.remove(node)
+                    count = 0
+                else:
+                    count = count + 1
+                    if count == len(MB):
+                        return MB
+       
 
     def pgm_generate(self, target, data, stats, subnodes):
-        stats_pd = pd.Series(stats, name='p-values')
-        MK_blanket_frame = stats_pd[stats_pd < 0.05]
-        MK_blanket = [node for node in MK_blanket_frame.index if node in subnodes]
+#         stats_pd = pd.Series(stats, name='p-values')
+#         MK_blanket_frame = stats_pd[stats_pd < 0.05]
+#         MK_blanket = [node for node in MK_blanket_frame.index if node in subnodes]    
+
         subnodes_no_target = [node for node in subnodes if node != target]
+        MK_blanket = self.search_MK(data, target, subnodes_no_target.copy())
+        
         est = HillClimbSearch(data[subnodes_no_target], scoring_method=BicScore(data))
         pgm_no_target = est.estimate()
         for node in MK_blanket:
